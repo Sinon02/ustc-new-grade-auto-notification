@@ -28,7 +28,7 @@ xxxx:xxx
 
 ## 虽然没啥用但是写了的feature
 
-1. 自动在console输出带时间的log，并存入"running.log"中，log的设置还算详细。
+1. 自动在console**输出带时间的log**，并存入"running.log"中，log的设置还算详细。
 2. 在运行的过程中会保存已有的成绩，下次执行时直接读取，类似于**“断点续传”**。
 3. 在没有输入发件方、没有输入接收方或者用户密码错误时会报错并退出，**防止连续5次登陆失败账户被锁定**
 4. 运行过程中**检测是否还在登陆状态**，不在的话会重新登录，适合长时间挂载。
@@ -38,21 +38,14 @@ xxxx:xxx
 
 ## 依赖库
 
-requests
-
-re
-
-time
-
-pickle
-
-os
-
-smtplib
-
-email
-
-logging
+* requests
+* re
+* time
+* pickle
+* os
+* smtplib
+* email
+* logging
 
 
 
