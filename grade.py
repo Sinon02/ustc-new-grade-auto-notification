@@ -87,7 +87,7 @@ while True:
             f=open('grades.pickle','wb')
             new_grades=parse_grade(sheet)
             new_grade=list(set(new_grades)-set(grades))
-            logger.info("new_grades!")
+            logger.info("new grades!")
             for k,v in new_grade:
                 logger.info(k+': '+str(v))
             grades=new_grades
