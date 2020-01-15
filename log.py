@@ -11,7 +11,7 @@ class Log(object):
         fh.setLevel(logging.INFO)
         #format
         fmt='%(asctime)s %(message)s'
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+        datefmt='%Y/%m/%d %H:%M:%S %p'
         formatter=logging.Formatter(fmt,datefmt)
         fh.setFormatter(formatter)
         #write to console

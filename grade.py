@@ -1,15 +1,13 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
-from urllib import request,parse
-import http.cookiejar as cookielib
+import requests
 import re
 from log import Log
-# import threading
-# from queue import Queue
 from mail import send_email
 from config import username,password,sleep_time
 import time
-
+import os
+import pickle
 url1='https://passport.ustc.edu.cn/login'
 url2='https://jw.ustc.edu.cn/ucas-sso/login'
 url3='https://jw.ustc.edu.cn/for-std/grade/sheet/getSemesters'
@@ -21,42 +19,35 @@ pattern1=re.compile("\"id\":(.+?),")
 pattern2=re.compile("{(.+?)}")
 pattern3=re.compile("\"courseNameCh\":\"(.+?)\",")
 pattern4=re.compile("\"score\":\"(.+?)\",")
-# def read_url(url,queue):
-#     data=request.urlopen(url).read()
-#     queue.put(data)
-# def fetch_parallel(urls):
-#     result=Queue()
-#     threads=[threading.Thread(target=read_url,args=(url,result)) for url in urls]
-#     for t in threads:
-#         t.start()
-#     for t in threads:
-#         t.join()
-#     return result
-def login():
+
+def login(s):
     logger.info('loging...')
-    cookie=cookielib.CookieJar()
-    opener=request.build_opener(request.HTTPCookieProcessor(cookie))
-    request.install_opener(opener)
-    login_data=parse.urlencode([
-        ('username',username),
-        ('password',password)
-    ])
-    req1=request.Request(url=url1,headers=headers)
-    result1=request.urlopen(req1,data=login_data.encode('utf-8'))
-    req2=request.Request(url=url2,headers=headers)
-    result2=request.urlopen(req2)
+    data={'username':username,'password':password}
+    r1=s.post(url1,data=data,headers=headers)
+    if(r1.text==''):
+        logger.info('username or password wrong!')
+        os._exit(0)
+    s.get(url2,headers=headers)
     logger.info('log in complete!')
 
-
-def get_grade():
-    url4='https://jw.ustc.edu.cn/for-std/grade/sheet/getGradeList?trainTypeId=1&semesterIds='    
-    GETID=request.urlopen(url3)
-    IDs=GETID.read().decode('utf-8')
+def get_ID(s):
+    logger.info('getting the max ID...')
+    GETID=s.get(url3)
+    IDs=GETID.text
     IDs=re.findall(pattern1,IDs)
     IDs=list(map(int,IDs))
     max_ID=max(IDs)
+    return max_ID
+
+def get_grade(s,max_ID):
+    logger.info('getting the grades')
+    url4='https://jw.ustc.edu.cn/for-std/grade/sheet/getGradeList?trainTypeId=1&semesterIds='    
     url4+=str(max_ID)
-    Grades=request.urlopen(url4).read().decode('utf-8')
+    Grades=s.get(url4).text
+    if '统一身份认证登录' in Grades:
+        logger.info('Not login')
+        login(s)
+        return get_grade(s,max_ID)
     sheet=re.findall(pattern2,Grades)
     return sheet
 def parse_grade(sheet):
@@ -75,25 +66,37 @@ grades=[]
 first_access=True
 logger=Log(__name__).getlog()
 logger.info("Started")
+if os.path.exists('grades.pickle') and os.path.getsize('grades.pickle'):
+    logger.info('Find the old data,reading...')
+    f=open('grades.pickle','rb')
+    grades=pickle.load(f)
+    grade_len=len(grades)
+    f.close()
+s=requests.Session()
 while True:
     logger.info('Query...')
     try:
         if(first_access):
-            login()
+            login(s)
+            max_ID=get_ID(s)
             first_access=False
-        sheet=get_grade()
-        if(len(sheet)==grade_len): # no new grade
+        sheet=get_grade(s,max_ID)
+        if(len(sheet)==grade_len+1): # no new grade
             pass
         else:
+            f=open('grades.pickle','wb')
             new_grades=parse_grade(sheet)
             new_grade=list(set(new_grades)-set(grades))
             logger.info("new_grades!")
             for k,v in new_grade:
                 logger.info(k+': '+str(v))
+            grades=new_grades
+            grade_len=len(grades)
+            logger.info('writing to file...')
+            pickle.dump(grades,f)
+            f.close()
             logger.info('sending Email...')
             send_email(new_grade)
-            grades=new_grades
-            grade_len=len(sheet)
     except Exception as e:
         if not isinstance(e, KeyboardInterrupt):
            logger.info('Error: '+ str(e))

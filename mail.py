@@ -4,9 +4,17 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 from log import Log
-from config import *
+from config import mail_host,mail_user,mail_passwd,use_ssl,ssl_port,receivers
 def send_email(new_grade):
     logger=Log(__name__).getlog()
+    try:
+        if(mail_host=='' or mail_user=='' or mail_passwd == ''):
+            raise Exception('Please input sender information!!!')
+        if(receivers ==[]):
+            raise Exception('Please input receiver information!!!')
+    except Exception as e:
+        logger.info('Exception: '+str(e))
+        return
     if use_ssl:
         ssl_address=mail_host+':'+str(ssl_port)
     grade_len=len(new_grade)
@@ -29,4 +37,5 @@ def send_email(new_grade):
         smtp.quit()
     except smtplib.SMTPException:
         logger.info("Error: 无法发送邮件")
+        return
     logger.info('Email has been sent successfully!')
