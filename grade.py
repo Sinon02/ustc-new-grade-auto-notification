@@ -8,7 +8,7 @@ from config import username,password,sleep_time
 import time
 import os
 import pickle
-url1='https://passport.ustc.edu.cn/login'
+url1='https://passport.ustc.edu.cn/login?service=https://jw.ustc.edu.cn/ucas-sso/login'
 url2='https://jw.ustc.edu.cn/ucas-sso/login'
 url3='https://jw.ustc.edu.cn/for-std/grade/sheet/getSemesters'
 url4='https://jw.ustc.edu.cn/for-std/grade/sheet/getGradeList?trainTypeId=1&semesterIds='
